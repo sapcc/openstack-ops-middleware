@@ -16,8 +16,9 @@ Planned extensions:
  
 ## Installation
  
-Install the python package into your (virtual) environment
+Install the python packages into your (virtual) environment
  
+    pip install git+https://github.com/sapcc/raven-python.git 
     pip install git+https://github.com/sapcc/openstack-ops-middleware.git 
      
 
@@ -71,6 +72,12 @@ The api tag contains the request path with (hex or uuid) identifiers replaced wi
 
 The sentry middleware forwards any exceptions that bubble up to the wsgi middleware layer to sentry.
 Since in many cases exceptions do not make it to the middleware layer, it also adds a logging handler that forwards log entries at a desired logging level to sentry.
+
+Since the current release of the python sentry client (raven-python) seems to have some [issues](https://github.com/getsentry/raven-python/issues/806) 
+when it is used in a mutliprocess/thread environment (as with most openstack components), we'll have to use a patched version 
+that needs to be installed separatly for now:
+ 
+    pip install git+https://github.com/sapcc/raven-python.git 
 
 To enable the sentry middleware, you'll need to add the following snippet to the applications **paste.ini**:
 

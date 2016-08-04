@@ -31,7 +31,10 @@ class StatsdMiddleware(object):
         self.client.increment('responses_total')
 
         status = response_wrapper.get('status')
-        status_code = status.split()[0]
+        if status:
+            status_code = status.split()[0]
+        else:
+            status_code = 'none'
 
         method = environ['REQUEST_METHOD']
 

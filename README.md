@@ -7,7 +7,7 @@ This project is still under heavy development and can change anytime.
 It currently supports
  
 - generation of statsd metrics (with datadog tag extensions) to be used with the [prometheus statsd exporter](https://github.com/prometheus/statsd_exporter)
-- a[sentry](http://getsentry.com)exception reporter
+- a [sentry](http://getsentry.com) exception reporter
 
 Planned extensions:
 
@@ -105,10 +105,10 @@ Once the filter has been declared and configured, the middleware can be inserted
 Example from keystone:
  
     [pipeline:public_api]
-    pipeline = cors sizelimit url_normalize request_id sentry build_auth_context token_auth json_body ec2_extension public_service
+    pipeline = cors sizelimit url_normalize request_id statsd build_auth_context token_auth json_body ec2_extension sentry public_service
  
     [pipeline:admin_api]
-    pipeline = cors sizelimit url_normalize request_id sentry build_auth_context token_auth json_body ec2_extension s3_extension admin_service
+    pipeline = cors sizelimit url_normalize request_id statsd build_auth_context token_auth json_body ec2_extension s3_extension sentry admin_service
      
     [pipeline:api_v3]
-    pipeline = cors sizelimit url_normalize request_id sentry build_auth_context token_auth json_body ec2_extension_v3 s3_extension service_v3
+    pipeline = cors sizelimit url_normalize request_id statsd build_auth_context token_auth json_body ec2_extension_v3 s3_extension sentry service_v3

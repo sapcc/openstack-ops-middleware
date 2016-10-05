@@ -4,7 +4,6 @@ import os
 import time
 import re
 import urlparse
-from abc import ABCMeta, abstractmethod
 from os.path import splitext
 
 
@@ -12,7 +11,7 @@ class StatsdMiddleware(object):
     def __init__(self, app, statsd_host='localhost', statsd_port='8125',
                  statsd_prefix='openstack', statsd_replace='id'):
         self.app = app
-        self._get_replace_strategy(os.getenv('STATSD_REPLACE', statsd_replace).lower())
+        self.replace_strategy = _ReplaceStrategy(os.getenv('STATSD_REPLACE', statsd_replace))
         self.client = DogStatsd(
             host=os.getenv('STATSD_HOST', statsd_host),
             port=int(os.getenv('STATSD_PORT', statsd_port)),
@@ -45,7 +44,7 @@ class StatsdMiddleware(object):
         path = splitext(path)[0]
 
         # replace parts of the path with constants based on strategy
-        path = self.replace_strategy.replace(path)
+        path = self.replace_strategy.apply(path)
 
         parts = path.rstrip('\/').split('/')
         if exception:
@@ -97,20 +96,28 @@ class StatsdMiddleware(object):
         finally:
             self.client.close_buffer()
 
-    def _get_replace_strategy(self, strategy):
-        if strategy == 'swift':
-            self.replace_strategy = _ReplaceStrategySwift()
-        else:
-            self.replace_strategy = _ReplaceStrategyId()
+
+class _ReplaceStrategy(object):
+    def __init__(self, strategies='id'):
+        self._strategies = []
+
+        # Expecting strings from config like 'id, swift' or 'swift' or 'Id,sWIFT'
+        strategies = strategies.lower().replace(' ', '')
+
+        for strategy in strategies.split(','):
+            if strategy == 'id':
+                self._strategies.append(_ReplaceStrategyId())
+            elif strategy == 'swift':
+                self._strategies.append(_ReplaceStrategySwift())
+
+    def apply(self, path):
+        # Iterate over replacement strategies and apply the substitutions
+        for strategy in self._strategies:
+            path = strategy.replace(path)
+        return path
 
 
-class _ReplaceStrategy(metaclass=ABCMeta):
-    @abstractmethod
-    def replace(self, path):
-        pass
-
-
-class _ReplaceStrategyId(_ReplaceStrategy):
+class _ReplaceStrategyId(object):
     def __init__(self):
         self._regex = re.compile(r'/[0-9a-fA-F-]+/')
 
@@ -119,7 +126,7 @@ class _ReplaceStrategyId(_ReplaceStrategy):
         return self._regex.sub('/id/', path + '/')
 
 
-class _ReplaceStrategySwift(_ReplaceStrategy):
+class _ReplaceStrategySwift(object):
     def __init__(self):
         self._regex = re.compile(r'(\S+AUTH_)([p\-]?[0-9a-fA-F-]+/?)([^ /\t\n\r\f\v]+/?)?(\S*)?')
 

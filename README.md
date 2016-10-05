@@ -59,21 +59,26 @@ or by setting the values in the paste.ini:
     statsd_port=9102
     statsd_prefix=openstack
 
-Optionally you can specify a replacement strategy for variant parts in the path to produce a constant metric. Per default IDs in the path will be substituted. There is also a strategy for Swift scenarios.
-
-    [filter:statsd]
-    statsd_replace=swift
-
-This will replace the variants in a Swift path like `/v1/AUTH_01234556789/container-name/pseudo-folder/object-name` to be `/v1/AUTH_account/container/object`
-
 The middleware generates the following metrics:
 
     <prefix>_requests_total_counter
     <prefix>_reponses_total_counter
     <prefix>_reponses_by_api_counter sliced by api, method and status
     <prefix>_latency_by_api_timer sliced by api and method
-    
-The api tag contains the request path with (hex or uuid) identifiers replaced with 'id'.
+
+#### Replacement Strategies
+
+As the request path might contain dynamic parts like UUIDs, there is the option to replace them with constants.
+The following replacements are supported:
+* id: (hex or uuid) identifiers replaced with 'id'
+* swift: replacing swift account, container and object names. The variants in a Swift path like `/v1/AUTH_01234556789/container-name/pseudo-folder/object-name` to be `/v1/AUTH_account/container/object`
+
+The strategies can be stacked and will be executed in the specified order:
+
+    [filter:statsd]
+    statsd_replace=id, swift
+
+Per default IDs in the path will be substituted.
 
 ### Sentry Middleware
 

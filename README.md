@@ -71,7 +71,7 @@ The middleware generates the following metrics:
 As the request path might contain dynamic parts like UUIDs, there is the option to replace them with constants.
 The following replacements are supported:
 * id: (hex or uuid) identifiers replaced with 'id'
-* swift: replacing swift account, container and object names. The variants in a Swift path like `/v1/AUTH_01234556789/container-name/pseudo-folder/object-name` to be `/v1/AUTH_account/container/object`
+* swift: replacing swift account, container and object names. The variants in a Swift path like `/v1/AUTH_01234556789/container-name/pseudo-folder/object-name` are replaced by `/v1/AUTH_account/container/object`
 
 The strategies can be stacked and will be executed in the specified order:
 

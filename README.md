@@ -60,9 +60,11 @@ or by setting the values in the paste.ini:
     statsd_prefix=openstack
 
 Optionally you can specify a replacement strategy for variant parts in the path to produce a constant metric. Per default IDs in the path will be substituted. There is also a strategy for Swift scenarios.
+
     [filter:statsd]
     statsd_replace=swift
-This will replace the variants in a Swift path like /v1/AUTH_01234556789/container-name/pseudo-folder/object-name to be /v1/AUTH_account/container/object
+
+This will replace the variants in a Swift path like `/v1/AUTH_01234556789/container-name/pseudo-folder/object-name` to be `/v1/AUTH_account/container/object`
 
 The middleware generates the following metrics:
 

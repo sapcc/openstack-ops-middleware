@@ -6,13 +6,12 @@ import re
 import urlparse
 from os.path import splitext
 
-ID_REGEX = re.compile(r'/[0-9a-fA-F-]+/')
-
 
 class StatsdMiddleware(object):
     def __init__(self, app, statsd_host='localhost', statsd_port='8125',
-                 statsd_prefix='openstack'):
+                 statsd_prefix='openstack', statsd_replace='id'):
         self.app = app
+        self.replace_strategy = _ReplaceStrategy(os.getenv('STATSD_REPLACE', statsd_replace))
         self.client = DogStatsd(
             host=os.getenv('STATSD_HOST', statsd_host),
             port=int(os.getenv('STATSD_PORT', statsd_port)),
@@ -44,8 +43,8 @@ class StatsdMiddleware(object):
         # strip extensions
         path = splitext(path)[0]
 
-        # replace identifiers with constant
-        path = ID_REGEX.sub('/id/', path + '/')
+        # replace parts of the path with constants based on strategy
+        path = self.replace_strategy.apply(path)
 
         parts = path.rstrip('\/').split('/')
         if exception:
@@ -96,3 +95,56 @@ class StatsdMiddleware(object):
             raise
         finally:
             self.client.close_buffer()
+
+
+class _ReplaceStrategy(object):
+    def __init__(self, strategies='id'):
+        self._strategies = []
+
+        # Expecting strings from config like 'id, swift' or 'swift' or 'Id,sWIFT'
+        strategies = strategies.lower().replace(' ', '')
+
+        for strategy in strategies.split(','):
+            if strategy == 'id':
+                self._strategies.append(_ReplaceStrategyId())
+            elif strategy == 'swift':
+                self._strategies.append(_ReplaceStrategySwift())
+
+    def apply(self, path):
+        # Iterate over replacement strategies and apply the substitutions
+        for strategy in self._strategies:
+            path = strategy.replace(path)
+        return path
+
+
+class _ReplaceStrategyId(object):
+    def __init__(self):
+        self._regex = re.compile(r'/[0-9a-fA-F-]+/')
+
+    def replace(self, path):
+        # replace identifiers with constant
+        return self._regex.sub('/id/', path + '/')
+
+
+class _ReplaceStrategySwift(object):
+    def __init__(self):
+        self._regex = re.compile(r'(\S+AUTH_)([p\-]?[0-9a-fA-F-]+/?)([^ /\t\n\r\f\v]+/?)?(\S*)?')
+
+    def replace(self, path):
+        # Transform Swift path from
+        # /v1/AUTH_0123456789/container-name/pseudo-folder/object-name
+        # to constants
+        # /v1/AUTH_account/container/object
+        m = self._regex.match(path)
+        if m:
+            # Replace account id with constant
+            path = m.group(1) + 'account'
+            if m.group(3) and m.group(3) != '':
+                # Replace container name with constant
+                path += '/container'
+            if m.group(4) and m.group(4) != '':
+                # Replace object name with constant
+                path += '/object'
+            path += '/'
+
+        return path

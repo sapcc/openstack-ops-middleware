@@ -65,8 +65,20 @@ The middleware generates the following metrics:
     <prefix>_reponses_total_counter
     <prefix>_reponses_by_api_counter sliced by api, method and status
     <prefix>_latency_by_api_timer sliced by api and method
-    
-The api tag contains the request path with (hex or uuid) identifiers replaced with 'id'.
+
+#### Replacement Strategies
+
+As the request path might contain dynamic parts like UUIDs, there is the option to replace them with constants.
+The following replacements are supported:
+* id: (hex or uuid) identifiers replaced with 'id'
+* swift: replacing swift account, container and object names. The variants in a Swift path like `/v1/AUTH_01234556789/container-name/pseudo-folder/object-name` are replaced by `/v1/AUTH_account/container/object`
+
+The strategies can be stacked and will be executed in the specified order:
+
+    [filter:statsd]
+    statsd_replace=id, swift
+
+Per default IDs in the path will be substituted.
 
 ### Sentry Middleware
 

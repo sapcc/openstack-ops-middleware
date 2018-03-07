@@ -1,2 +1,2 @@
 datadog
--e git+https://github.com/sapcc/raven-python.git@6.7.0.dev0#egg=raven
+-e git+https://github.com/sapcc/raven-python.git#egg=raven-6.7.0.dev0
